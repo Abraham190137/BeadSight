@@ -1,6 +1,7 @@
 import numpy as np
 import cv2
 import unpack_force_data
+import matplotlib.pyplot as plt
 
 # create a video writer object
 fourcc = cv2.VideoWriter_fourcc(*'mp4v')
