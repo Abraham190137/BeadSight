@@ -7,10 +7,10 @@ def unpack_data(data_file, resolution=[0, 0]):
     with open(data_file, 'rb') as file:
         data = pickle.load(file) 
 
-    plt.plot(data['forces'])
-    plt.xlabel('Frame')
-    plt.ylabel('Pressure (kN/m^2)')
-    plt.show()
+    # plt.plot(data['forces'])
+    # plt.xlabel('Frame')
+    # plt.ylabel('Pressure (kN/m^2)')
+    # plt.show()
     # check if the resolution of the output was set by the user:
     if resolution != [0, 0]:
         ratio = [resolution[0]/data['height'], resolution[1]/data['width']]
