@@ -8,6 +8,10 @@ from typing import List, Dict, Tuple, Any
 from scipy.interpolate import UnivariateSpline
 import os
 
+### IMPORTANT ### 
+# The code assumes that in the video, as the x location increases the finger moves to the right, and as the 
+# y location increases the finger moves down. If this is not the case, the code will need to be modified.
+
 """
 This code does the initial processing to create pressure maps from the scale data (WEIGHTS_FILE), and
 processes the G-Code file (info.json). It splits the video into individual tests (based on the scale data), 
@@ -187,7 +191,7 @@ if __name__ == "__main__":
     # now, split the weight data into individual tests:
     # to do this, first the user selects the peaks of the first two tests.
 
-    print("Please enter the x value of the first two peaks of the test.")
+    print("Please enter the x value of the first peak and the last peak of the test.")
     plt.plot(force_data[force_start_index:, 1], force_data[force_start_index:, 0])
     plt.show()
 
@@ -200,18 +204,18 @@ if __name__ == "__main__":
 
     while True:
         try:
-            second_peak:float = float(input("Enter the second peak time: "))
+            last_peak:float = float(input("Enter the last peak time: "))
             break
         except:
             print('invalid input, try again')
 
-    test_length:float = (second_peak - first_peak)
     num_peaks:int = len(info['points'])
-    peaks:List[float] = [first_peak, second_peak]
+    test_length:float = (last_peak - first_peak)/(num_peaks-1)
+    peaks:List[float] = [first_peak]
     # The nth peak will be aproximatly at test_length + n-1th peak
-    for i in range(2, num_peaks):
-        peak_index_min:int = int(np.round(time_to_frame_spline(peaks[-1] + 0.75*test_length)))
-        peak_index_max:int = int(np.round(time_to_frame_spline(peaks[-1] + 1.25*test_length)))
+    for i in range(1, num_peaks):
+        peak_index_min:int = int(np.round(time_to_frame_spline(peaks[-1] + 0.5*test_length)))
+        peak_index_max:int = int(np.round(time_to_frame_spline(peaks[-1] + 1.5*test_length)))
         peak_index:int = np.argmax(force_data[peak_index_min:peak_index_max, 0]) + peak_index_min
         peaks.append(force_data[peak_index, 1])
 
