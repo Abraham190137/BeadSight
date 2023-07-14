@@ -88,13 +88,5 @@ save_dict['center_point'] = CENTER_POINT
 with open(DIR + 'info.json', 'w') as json_file:
     json.dump(save_dict, json_file)
 
-# with open(INFO_FILE, 'w') as info_file:
-#     info_file.write(str(calibration_frame) + "," + str(start_frame) + "," + str(end_frame) + '\n')
-#     info_file.write(str(points[0][0]) + "," + str(points[0][1]) + '\n')
-#     points.pop(0)
-#     info_file.write(str(len(points))+ '\n') # number of TEST points, does not include the first point (center)
-#     for point in points:
-#         info_file.write(str(point[0]) + "," + str(point[1]) + '\n')
-
 
 
