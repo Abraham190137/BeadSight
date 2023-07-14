@@ -214,8 +214,8 @@ if __name__ == "__main__":
     peaks:List[float] = [first_peak]
     # The nth peak will be aproximatly at test_length + n-1th peak
     for i in range(1, num_peaks):
-        peak_index_min:int = int(np.round(time_to_frame_spline(peaks[-1] + 0.5*test_length)))
-        peak_index_max:int = int(np.round(time_to_frame_spline(peaks[-1] + 1.5*test_length)))
+        peak_index_min:int = int(np.round(time_to_frame_spline(peaks[-1] + 0.66*test_length)))
+        peak_index_max:int = int(np.round(time_to_frame_spline(peaks[-1] + 1.33*test_length)))
         peak_index:int = np.argmax(force_data[peak_index_min:peak_index_max, 0]) + peak_index_min
         peaks.append(force_data[peak_index, 1])
 
