@@ -144,7 +144,7 @@ if __name__ == "__main__":
     SENSOR_SIZE_MM = 38.67
     FINGER_SIZE_MM = 12.5
 
-    GENERATE_INFO_FILE = True
+    GENERATE_INFO_FILE = False
 
     # Generate the info file:
     if GENERATE_INFO_FILE:
@@ -179,17 +179,51 @@ if __name__ == "__main__":
     # The scale is accurate down to ~1-2 grams (but sometimes can be as far off as 5 grams), so even when no force 
     # is being applied, the scale still reads some force. Inorder to elminate this cases, I set any forces below 
     # 10g to 0g (to represent the sensor is not in contact)
-    for i in range(force_data.shape[0]):
-        if force_data[i, 0] < 10:
-            force_data[i, 0] = 0
+    # for i in range(force_data.shape[0]):
+    #     if force_data[i, 0] < 5:
+    #         force_data[i, 0] = 0
 
-    # some may slip through, delete any non-zero measurement whose neighbors and both 0.
-    for i in range(1, force_data.shape[0]-1):
-        if force_data[i, 0] != 0 and force_data[i-1, 0] == 0 and force_data[i+1, 0] == 0:
-            force_data[i, 0] = 0
+    # # some may slip through, delete any non-zero measurement whose neighbors and both 0.
+    # for i in range(1, force_data.shape[0]-1):
+    #     if force_data[i, 0] != 0 and force_data[i-1, 0] == 0 and force_data[i+1, 0] == 0:
+    #         force_data[i, 0] = 0
 
-    # now, split the weight data into individual tests:
-    # to do this, first the user selects the peaks of the first two tests.
+    # # now, split the weight data into individual tests:
+    # # to do this, first the user selects the peaks of the first two tests.
+
+    # # seperate tests by troughs, and find the troughs by determining when the force falls below a cutoff. 
+    # # Keep raising the cutoff untill the number of troughs is 1 more than the number of tests.
+    # # For each trough, save the division point, which is the cetner of the trough.
+    # for cutoff in range(1000):
+    #     divisions:List[int] = []
+    #     trough_start = force_start_index
+    #     in_trough = True
+    #     for i in range(force_start_index, force_data.shape[0]-1):
+    #         if in_trough and force_data[i, 0] > cutoff:
+    #             divisions.append((trough_start + i)//2)
+    #             in_trough = False
+    #         if not in_trough and force_data[i, 0] <= cutoff:
+    #             trough_start = i
+    #             in_trough = True
+    #     # break
+    #     if len(divisions) == len(info['points']) + 1:
+    #         break
+    #     else:
+    #         print(len(divisions), len(info['points']) + 1)
+    
+    # print("The divisions will now be plotted. Please check to make sure they are correct.")
+    # plt.plot(force_data[:, 1], force_data[:, 0])
+    # for division in divisions:
+    #     plt.axvline(x=force_data[division, 1], color='r')
+    # plt.title("Test Divisions")
+    # plt.show()
+
+    # if len(divisions) != len(info['points']) + 1:
+    #     print("Error: couldn't find the divisions")
+    #     print("Number of divisions:", len(divisions))
+    #     print("Number of tests:", len(info['points']))
+    #     print("Try changing the cutoff range")
+    #     exit()
 
     print("Please enter the x value of the first peak and the last peak of the test.")
     plt.plot(force_data[force_start_index:, 1], force_data[force_start_index:, 0])
@@ -233,17 +267,29 @@ if __name__ == "__main__":
         division_times.append((peaks[i] + peaks[i+1])/2)
     division_times.append(peaks[-1] + test_length/2)
 
-    division_indexs:List[int] = np.round(time_to_frame_spline(division_times)).astype(int).tolist()
+    divisions:List[int] = np.round(time_to_frame_spline(division_times)).astype(int).tolist()
 
     # plot the forces, along with vertical lines at the divisions for visual conformation:
     print("The divisions will now be plotted. Please check to make sure they are correct.")
     plt.plot(force_data[:, 1], force_data[:, 0])
-    for division in division_indexs:
+    for division in divisions:
         plt.axvline(x=force_data[division, 1], color='r')
     plt.title("Test Divisions")
     plt.show()
 
-    assert len(division_indexs)-1 == len(info['points']), "incorrect number of test divisions"
+
+    # The scale is accurate down to ~1-2 grams (but sometimes can be as far off as 5 grams), so even when no force 
+    # is being applied, the scale still reads some force. Inorder to elminate this cases, I set any forces below 
+    # 5g to 0g (to represent the sensor is not in contact)
+    
+    for i in range(force_data.shape[0]):
+        if force_data[i, 0] < 5:
+            force_data[i, 0] = 0
+
+    # some may slip through, delete any non-zero measurement whose neighbors and both 0.
+    for i in range(1, force_data.shape[0]-1):
+        if force_data[i, 0] != 0 and force_data[i-1, 0] == 0 and force_data[i+1, 0] == 0:
+            force_data[i, 0] = 0
 
     # break the video into invidual tests, and save each test video.
     fourcc = cv2.VideoWriter_fourcc(*'mp4v')
@@ -259,8 +305,8 @@ if __name__ == "__main__":
         print('test', i)
 
         # save each test's video
-        start_idx = division_indexs[i]
-        end_idx = division_indexs[i+1]
+        start_idx = divisions[i]
+        end_idx = divisions[i+1]
         start_frame = int(force_data[start_idx, 1]*fps) + info["start_frame"]
         end_frame = int(force_data[end_idx, 1]*fps) + info["start_frame"]
 
