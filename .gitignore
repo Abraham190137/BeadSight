@@ -3,3 +3,5 @@ Data collection/output
 *.mp4
 x-unet/
 processed_data/
+data/
+
