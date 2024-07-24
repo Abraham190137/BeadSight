@@ -4,4 +4,5 @@ Data collection/output
 x-unet/
 processed_data/
 data/
+**/__pycache__/
 

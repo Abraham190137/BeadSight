@@ -9,6 +9,8 @@ import os
 
 from torchsummary import summary
 
+from typing import List, Tuple, Dict
+
 
 class Conv(nn.Module):
     def __init__(self, C_in, C_out):
@@ -54,11 +56,14 @@ class UpSampling(nn.Module):
 
 class UNet(nn.Module):
 
-    def __init__(self):
+    def __init__(self, 
+                 window_size: int):
+        
         super(UNet, self).__init__()
-
+        self.window_size = window_size # save the window size for later use
+        
         # 4 times
-        self.C1 = Conv(45, 16)    #256    # Modified to take 15 channel inputs
+        self.C1 = Conv(3*window_size, 16)    #256    # Modified to take 15 channel inputs
         self.D1 = DownSampling(16) #128
         self.C2 = Conv(16, 32) # 128
         self.D2 = DownSampling(32) # 64
@@ -74,15 +79,17 @@ class UNet(nn.Module):
         self.C9 = Conv(32, 16)
 
 
-        self.Th = torch.nn.ReLU()  # Remove sigmoid activation
+        self.act = torch.nn.ReLU() # use ReLU as activation function
 
         # Separate convolutional layers for prediction
         self.pred = torch.nn.Conv2d(16, 1, 3, 1, 1)  
 
 
 
-    def forward(self, x):
-        # x: 45 x 256 x 256
+    def forward(self, x):        
+        # x: batch, 3, window_size, 256, 256
+        # need to convert to batch, 3*window_size, 256, 256
+        x = x.view(-1, 3*self.window_size, 256, 256)
         R1 = self.C1(x) # 16 x 256 x 256
         R2 = self.C2(self.D1(R1)) # 32 x 128 x 128
         R3 = self.C3(self.D2(R2)) # 64 x 64 x 64
@@ -93,14 +100,14 @@ class UNet(nn.Module):
         O3 = self.C8(self.U3(O2, R2))
         O4 = self.C9(self.U4(O3, R1))
         
-        return self.Th(self.pred(O4))  
+        return self.act(self.pred(O4)).squeeze(1)  
 
 
 
 
 if __name__ == '__main__':
     a = torch.randn(2, 45, 256, 256)
-    net = UNet()
+    net = UNet(window_size=15)
     print(net(a).shape)  # torch.Size([2, 1, 256, 256])
 
     # Generate the UNet structure figure
