@@ -277,15 +277,18 @@ def train_model(data_path: str,
     return model
 
 def main():
-    DATA_PATH = "/home/aigeorge/research/BeadSight/data/initial_test_34/processed_data.hdf5"
-    DECOMPRESSED_DATA_PATH = "/home/aigeorge/research/BeadSight/data/initial_test_34/decompressed_data.hdf5"
+    # use the root dir with the relative path to make an absolute path, so it works in any directory
+    root_dir = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
+    DATA_PATH = os.path.join(root_dir, "data/initial_test_34/processed_data.hdf5")
+    DECOMPRESSED_DATA_PATH = os.path.join(root_dir, "data/initial_test_34/decompressed_data.hdf5")
+    SAVE_PATH = os.path.join(root_dir, "data/initial_test_34/trained_models")
 
     if not os.path.exists(DECOMPRESSED_DATA_PATH):
         decompress_h5py(DATA_PATH, DECOMPRESSED_DATA_PATH)
 
     matplotlib.use('Agg')
     model = train_model(data_path=DECOMPRESSED_DATA_PATH,
-                        save_path="/home/aigeorge/research/BeadSight/data/initial_test_34/trained_models",
+                        save_path=SAVE_PATH,
                         name = "test_",
                         lr=1e-4,
                         weight_decay=1e-5,
