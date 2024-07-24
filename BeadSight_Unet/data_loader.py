@@ -10,6 +10,8 @@ from typing import List, Tuple, Dict
 from matplotlib import pyplot as plt
 
 import time
+import shutil
+from tqdm import tqdm
 
 
 def in_contact(forces: np.ndarray, cutoff_low:float=10, cutoff_high:float=50) -> List[bool]:
@@ -268,7 +270,7 @@ class BeadSightDataset(Dataset):
         pressure_map = pressure_map/self.avg_contact_pressure
 
         if self.noise_std > 0:
-            images = images + torch.randn_like(images) * self.noise_std
+            images = torch.normal(images, self.noise_std)
 
         if self.rot_and_flip: # apply random rotation and flip - default is to apply only during training
             rot = np.random.randint(0, 3) # random rotation
@@ -324,5 +326,24 @@ def replay_data(hdf5_file:str):
         cv2.imshow('Pressure Map', pressure_map/max_norm)
         cv2.waitKey(1)
 
+def decompress_h5py(in_file:str, out_file:str):
+    # makes a copy of the file, decompressing the images
+
+    # first, copy the file
+    shutil.copy(in_file, out_file)
+
+    with h5py.File(out_file, 'r+') as out_data:
+        images_shape = out_data['images'].shape
+        del out_data['images']
+        uncompressed_images = out_data.create_dataset(name = 'images', 
+                                                      shape = images_shape,
+                                                      chunks = (1, images_shape[1], images_shape[2], images_shape[3]), 
+                                                      dtype = np.uint8)
+        with h5py.File(in_file, 'r') as in_data:
+            images = in_data['images']
+            for i in tqdm(range(images.shape[0]), desc="Decompressing Images"):
+                uncompressed_images[i] = images[i]
+            
+        
 if __name__ == "__main__":
     replay_data("/home/aigeorge/research/BeadSight/data/initial_test_34/processed_data.hdf5")

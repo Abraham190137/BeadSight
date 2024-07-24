@@ -14,7 +14,7 @@ import shutil
 
 from tqdm import tqdm
 
-from data_loader import BeadSightDataset, get_press_indicies, get_valid_indices
+from data_loader import BeadSightDataset, get_press_indicies, get_valid_indices, decompress_h5py
 
 SRC_FILES = ["model_training.py", "Unet_model.py", "data_loader.py"]
 
@@ -187,7 +187,7 @@ def train_model(data_path: str,
     train_data_loader = DataLoader(train_data, 
                                    batch_size=batch_size, 
                                    shuffle=True, 
-                                   num_workers=8, 
+                                   num_workers=12, 
                                    prefetch_factor=2, 
                                    pin_memory=True)
     
@@ -277,8 +277,14 @@ def train_model(data_path: str,
     return model
 
 def main():
+    DATA_PATH = "/home/aigeorge/research/BeadSight/data/initial_test_34/processed_data.hdf5"
+    DECOMPRESSED_DATA_PATH = "/home/aigeorge/research/BeadSight/data/initial_test_34/decompressed_data.hdf5"
+
+    if not os.path.exists(DECOMPRESSED_DATA_PATH):
+        decompress_h5py(DATA_PATH, DECOMPRESSED_DATA_PATH)
+
     matplotlib.use('Agg')
-    model = train_model(data_path="/home/aigeorge/research/BeadSight/data/initial_test_34/processed_data.hdf5",
+    model = train_model(data_path=DECOMPRESSED_DATA_PATH,
                         save_path="/home/aigeorge/research/BeadSight/data/initial_test_34/trained_models",
                         name = "test_",
                         lr=1e-4,
