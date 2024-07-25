@@ -80,7 +80,6 @@ def get_video_metadata(video_log_paths:List[str],
 
     # loop through the video meta data and adjust the times
     meta_data_list = []
-    total_frames = 0
     for i in range(len(video_paths)):
         if all_times[i][0] > end_time:
             continue # skip this video, as it starts after the time range
@@ -102,9 +101,6 @@ def get_video_metadata(video_log_paths:List[str],
                                   num_frames = end_idx - start_idx)
         
         meta_data_list.append(meta_data)
-
-    assert len(meta_data_list) > 0, "No videos found in the time range"
-    print(f"Using {len(meta_data_list)} videos, with a total of {total_frames} frames")
 
     return meta_data_list
 
@@ -256,6 +252,8 @@ def convert_data_to_hdf5(data_folder_path:str,
     
     meta_data_list = get_video_metadata(video_log_paths, video_paths, start_time, end_time)
     total_frames = sum([meta_data.num_frames for meta_data in meta_data_list])
+
+    print(f"Using {len(meta_data_list)} videos, with a total of {total_frames} frames")
 
     # load the first video to initialize the defisheye object
     cap = cv2.VideoCapture(meta_data_list[0].path)
