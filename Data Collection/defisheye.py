@@ -22,6 +22,8 @@ from numpy import arange, sqrt, arctan, sin, tan, meshgrid, pi
 from numpy import ndarray, hypot
 import torch
 
+from typing import Union
+
 
 class Defisheye:
     """
@@ -147,23 +149,32 @@ class Defisheye:
         self.xs, self.ys, = self._map(self.i, self.j, ofocinv, dim)
         return self.xs, self.ys, self.i, self.j
     
-    def unwarp(self, image, use_torch=True):
+    def unwarp(self, image: Union[ndarray, torch.Tensor]):
         """
         Added functionality to allow for a single calculated mapping to be applied to a series of images
         from the same fisheye camera.
         """
-        if use_torch:
+        # if image is a single image, add a dimension to make it a batch of 1
+        image_rank = len(image.shape)
+        if image_rank == 3:
+            image = image[None, ...]
+
+        if isinstance(image, torch.Tensor):
             with torch.no_grad():
-                image = torch.tensor(image).cuda()
-                image = image[self.y0:self.yf, self.x0:self.xf, :]
+                image = image[:, self.y0:self.yf, self.x0:self.xf, :]
                 img = image.clone()
-                img[self.i, self.j, :] = image[self.xs, self.ys, :]
-            return img.cpu().detach().numpy()
-        else:
-            image = image[self.y0:self.yf, self.x0:self.xf, :]
+                img[:, self.i, self.j, :] = image[:, self.xs, self.ys, :]
+        elif isinstance(image, ndarray):
+            image = image[:, self.y0:self.yf, self.x0:self.xf, :]
             img = image.copy()
-            img[self.i, self.j, :] = image[self.xs, self.ys, :]
-            return img
+            img[:, self.i, self.j, :] = image[:, self.xs, self.ys, :]
+        else:
+            raise Exception("Image format not recognized. Please provide a numpy array or a torch tensor.")
+            
+        if image_rank == 3: # if image was a single image, remove the batch dimension
+            img = img[0]
+
+        return img
 
     def convert(self, outfile=None):
         if self._format == "circular":
