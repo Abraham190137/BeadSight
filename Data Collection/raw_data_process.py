@@ -293,7 +293,7 @@ def convert_data_to_hdf5(data_folder_path:str,
         valid_dataset = save_file.create_dataset(name="valid",
                                                 shape=(total_frames,),
                                                 chunks = (1,),
-                                                dtype=np.bool)
+                                                dtype=bool)
         
         time_dataset = save_file.create_dataset(name="time",
                                                 shape=(total_frames,),
@@ -419,11 +419,11 @@ if __name__ == "__main__":
         "dist_unit": "mm",
     }
 
-    convert_data_to_hdf5(data_folder_path = "/home/aigeorge/research/BeadSight/data/initial_test_34", 
-                         save_name = "test.hdf5",
+    convert_data_to_hdf5(data_folder_path = "/home/abraham/BeadSight/data/12_hr_100_0", 
+                         save_name = "processed_data.hdf5",
                          printer_center = (150.5, 109.5), 
-                         start_time=60*5, # seconds
-                         end_time=60*15, # seconds
+                         start_time=60*60, # seconds
+                         end_time=60*60*3, # seconds
                          resolution = (256, 256), 
                          metadata = meta_data, 
                          compression_level=0, 
