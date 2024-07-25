@@ -83,15 +83,15 @@ def get_video_metadata(video_log_paths:List[str],
     for i in range(len(video_paths)):
         if all_times[i][0] > end_time:
             continue # skip this video, as it starts after the time range
-        elif all_times[i][0] < start_time:
-            start_idx = 0 # start from the beginning
+        elif all_times[i][0] > start_time:
+            start_idx = 0 # video starts after the start time
         else:
             start_idx = np.searchsorted(all_times[i], start_time, side="left")
-
+            
         if all_times[i][-1] < start_time:
             continue # skip this video, as it ends before the time range
-        elif all_times[i][-1] > end_time:
-            end_idx = len(all_times[i]) # go to the end
+        elif all_times[i][-1] < end_time:
+            end_idx = len(all_times[i]) # video ends before the end time
         else:
             end_idx = np.searchsorted(all_times[i], end_time, side="right")
 
@@ -417,10 +417,10 @@ if __name__ == "__main__":
         "dist_unit": "mm",
     }
 
-    convert_data_to_hdf5(data_folder_path = "/home/abraham/BeadSight/data/12_hr_100_0", 
+    convert_data_to_hdf5(data_folder_path = "data/12_hr_100_0", 
                          save_name = "processed_data.hdf5",
                          printer_center = (150.5, 109.5), 
-                         start_time=60*60, # seconds
+                         start_time=60*60*1, # seconds
                          end_time=60*60*3, # seconds
                          resolution = (256, 256), 
                          metadata = meta_data, 
