@@ -162,7 +162,8 @@ def train_model(data_path: str,
     with h5py.File(data_path, 'r') as data:
         pixel_mean = data.attrs['pixel_mean']
         pixel_std = data.attrs['pixel_std']
-        average_force = data.attrs['average_force']   
+        forces = data["forces"][:]
+        average_force = np.mean(forces)
 
 
     # create the data loaders:
@@ -206,7 +207,7 @@ def train_model(data_path: str,
         # train the model
         model.train()
         epoch_train_losses = []
-        for i, (images, pressure_maps) in tqdm(enumerate(train_data_loader), desc=f'Epoch {epoch} - Training', total=len(train_data_loader)):
+        for i, (images, pressure_maps, idx) in tqdm(enumerate(train_data_loader), desc=f'Epoch {epoch} - Training', total=len(train_data_loader)):
             images = images.to(device)
             pressure_maps = pressure_maps.to(device)
 
@@ -229,7 +230,7 @@ def train_model(data_path: str,
         model.eval()
         epoch_test_losses = []
         with torch.no_grad():
-            for i, (images, pressure_maps) in tqdm(enumerate(test_data_loader), desc=f'Epoch {epoch} - Testing', total=len(test_data_loader)):
+            for i, (images, pressure_maps, idx) in tqdm(enumerate(test_data_loader), desc=f'Epoch {epoch} - Testing', total=len(test_data_loader)):
                 images = images.to(device)
                 pressure_maps = pressure_maps.to(device)
 
@@ -279,15 +280,15 @@ def train_model(data_path: str,
 def main():
     # use the root dir with the relative path to make an absolute path, so it works in any directory
     root_dir = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
-    DATA_PATH = os.path.join(root_dir, "data/initial_test_34/processed_data.hdf5")
-    DECOMPRESSED_DATA_PATH = os.path.join(root_dir, "data/initial_test_34/decompressed_data.hdf5")
+    DATA_PATH = os.path.join(root_dir, "data/12_hr_100_0/hours_1_to_3.hdf5")
+    # DECOMPRESSED_DATA_PATH = os.path.join(root_dir, "data/initial_test_34/decompressed_data.hdf5")
     SAVE_PATH = os.path.join(root_dir, "data/initial_test_34/trained_models")
 
-    if not os.path.exists(DECOMPRESSED_DATA_PATH):
-        decompress_h5py(DATA_PATH, DECOMPRESSED_DATA_PATH)
+    # if not os.path.exists(DECOMPRESSED_DATA_PATH):
+    #     decompress_h5py(DATA_PATH, DECOMPRESSED_DATA_PATH)
 
     matplotlib.use('Agg')
-    model = train_model(data_path=DECOMPRESSED_DATA_PATH,
+    model = train_model(data_path=DATA_PATH,
                         save_path=SAVE_PATH,
                         name = "test_",
                         lr=1e-4,

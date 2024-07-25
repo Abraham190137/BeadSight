@@ -281,7 +281,7 @@ class BeadSightDataset(Dataset):
                 images = torch.flip(images, (2,))
                 pressure_map = torch.flip(pressure_map, (0,))
 
-        return images, pressure_map
+        return images, pressure_map, idx
     
 def replay_data(hdf5_file:str):
     import cv2
@@ -315,7 +315,7 @@ def replay_data(hdf5_file:str):
                                train=False)
     
     for i in range(len(dataset)):
-        images, pressure_map = dataset.__getitem__(i)
+        images, pressure_map, idx = dataset.__getitem__(i)
         image = images[-1].permute(1,2,0).numpy()
         pressure_map = pressure_map.numpy()
 
