@@ -306,6 +306,11 @@ def convert_data_to_hdf5(data_folder_path:str,
         
         # add additional metadata:
         save_file.attrs.update(metadata)
+        save_file.attrs["printer_center"] = printer_center
+        save_file.attrs["start_time"] = start_time
+        save_file.attrs["end_time"] = end_time
+        save_file.attrs["resolution"] = resolution
+        save_file.attrs["compression_level"] = compression_level
         
         # loop through the video files and load the data
         progress_bar = tqdm.tqdm(total=total_frames)
