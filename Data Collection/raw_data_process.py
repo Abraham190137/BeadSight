@@ -423,10 +423,10 @@ if __name__ == "__main__":
     }
 
     convert_data_to_hdf5(data_folder_path = "data/12_hr_100_0", 
-                         save_name = "hours_1_to_3.hdf5",
+                         save_name = "hours_11_to_12.hdf5",
                          printer_center = (150.5, 109.5), 
-                         start_time=60*60*1, # seconds
-                         end_time=60*60*3, # seconds
+                         start_time=60*60*11, # seconds
+                         end_time=60*60*12, # seconds
                          resolution = (256, 256), 
                          metadata = meta_data, 
                          compression_level=0, 
