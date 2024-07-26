@@ -198,7 +198,6 @@ class BeadSightDataset(Dataset):
                  train: bool,
                  rot_and_flip:bool=None,
                  window_size:int=15,
-                 noise_std:float=0.0,
                  ):
         
         print('begin dataset init')
@@ -206,7 +205,6 @@ class BeadSightDataset(Dataset):
         self.window_size = window_size
         self.indices = indicies
         self.train = train
-        self.noise_std = noise_std
         
         if rot_and_flip is None:
             self.rot_and_flip = train
@@ -257,10 +255,20 @@ class BeadSightDataset(Dataset):
 
         # get the pressure map
         pressure_map = self.pressure_map(force, contact_pos)
-        
-        pressure_map = torch.tensor(pressure_map, dtype=torch.float32)
 
-        images = torch.tensor(images, dtype=torch.float32)
+        # do the flip and rotation in numpy so that we get views instead of copies
+        if self.rot_and_flip: # apply random rotation and flip - default is to apply only during training
+            rot = np.random.randint(0, 3) # random rotation
+            images = np.rot90(images, rot, (1,2))
+            pressure_map = np.rot90(pressure_map, rot, (0,1))
+
+            if torch.rand(1) > 0.5: # random flip
+                images = np.flip(images, (2,))
+                pressure_map = np.flip(pressure_map, (0,))
+        
+        pressure_map = torch.from_numpy(pressure_map.astype(np.float32))
+
+        images = torch.from_numpy(images.astype(np.float32))
 
         # change the order of the dimensions: t, h, w, c -> t, c, h, w
         images = images.permute(0,3,1,2)
@@ -269,17 +277,14 @@ class BeadSightDataset(Dataset):
         images = self.image_normalize(images)
         pressure_map = pressure_map/self.avg_contact_pressure
 
-        if self.noise_std > 0:
-            images = torch.normal(images, self.noise_std)
+        # if self.rot_and_flip: # apply random rotation and flip - default is to apply only during training
+        #     rot = np.random.randint(0, 3) # random rotation
+        #     images = torch.rot90(images, rot, (2,3))
+        #     pressure_map = torch.rot90(pressure_map, rot, (0,1))
 
-        if self.rot_and_flip: # apply random rotation and flip - default is to apply only during training
-            rot = np.random.randint(0, 3) # random rotation
-            images = torch.rot90(images, rot, (2,3))
-            pressure_map = torch.rot90(pressure_map, rot, (0,1))
-
-            if torch.rand(1) > 0.5: # random flip
-                images = torch.flip(images, (2,))
-                pressure_map = torch.flip(pressure_map, (0,))
+        #     if torch.rand(1) > 0.5: # random flip
+        #         images = torch.flip(images, (2,))
+        #         pressure_map = torch.flip(pressure_map, (0,))
 
         return images, pressure_map, idx
     

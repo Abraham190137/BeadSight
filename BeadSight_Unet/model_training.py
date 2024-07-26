@@ -84,8 +84,10 @@ def train_model(data_path: str,
           window_size: int,
           train_test_split: float,
           batch_size: int,
+          n_workers: int,
           load_checkpoint_path: str = None,
-          num_plot_samples: int = 5) -> UNet:
+          num_plot_samples: int = 5,
+          noise_std:float = 0.0) -> UNet:
     
     # get a list of all folders in the save path:
     folders = os.listdir(save_path)
@@ -163,7 +165,7 @@ def train_model(data_path: str,
         pixel_mean = data.attrs['pixel_mean']
         pixel_std = data.attrs['pixel_std']
         forces = data["forces"][:]
-        average_force = np.mean(forces)
+        average_force = np.mean(forces[valid_indices])
 
 
     # create the data loaders:
@@ -173,8 +175,7 @@ def train_model(data_path: str,
                                   pixel_std=pixel_std,
                                   average_force=average_force,
                                   train=True,
-                                  window_size=window_size,
-                                  noise_std=0.05)
+                                  window_size=window_size)
     
     test_data = BeadSightDataset(hdf5_file=data_path,
                                  indicies=test_indices,
@@ -188,14 +189,14 @@ def train_model(data_path: str,
     train_data_loader = DataLoader(train_data, 
                                    batch_size=batch_size, 
                                    shuffle=True, 
-                                   num_workers=12, 
+                                   num_workers=n_workers, 
                                    prefetch_factor=2, 
                                    pin_memory=True)
     
     test_data_loader = DataLoader(test_data, 
                                   batch_size=batch_size, 
                                   shuffle=True, 
-                                  num_workers=8, 
+                                  num_workers=n_workers, 
                                   prefetch_factor=2, 
                                   pin_memory=True)
 
@@ -210,6 +211,10 @@ def train_model(data_path: str,
         for i, (images, pressure_maps, idx) in tqdm(enumerate(train_data_loader), desc=f'Epoch {epoch} - Training', total=len(train_data_loader)):
             images = images.to(device)
             pressure_maps = pressure_maps.to(device)
+
+            # add noise to the images - do this here so that cuda makes it faster
+            if noise_std > 0:
+                images = torch.normal(images, noise_std)
 
             outputs = model(images)
             loss = criterion(outputs, pressure_maps)
@@ -269,8 +274,10 @@ def train_model(data_path: str,
             'test_indices': test_data_loader.dataset.indices,
             'dataset_path': train_data_loader.dataset.hdf5_file,
             'lr': lr,
+            'weight_decay': weight_decay,
             'window_size': window_size,
-            'batch_size': batch_size
+            'batch_size': batch_size,
+            'noise_std': noise_std
         }
 
         torch.save(checkpoint, checkpoint_path)
@@ -282,7 +289,7 @@ def main():
     root_dir = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
     DATA_PATH = os.path.join(root_dir, "data/12_hr_100_0/hours_1_to_3.hdf5")
     # DECOMPRESSED_DATA_PATH = os.path.join(root_dir, "data/initial_test_34/decompressed_data.hdf5")
-    SAVE_PATH = os.path.join(root_dir, "data/initial_test_34/trained_models")
+    SAVE_PATH = os.path.join(root_dir, "data/12_hr_100_0/trained_models")
 
     # if not os.path.exists(DECOMPRESSED_DATA_PATH):
     #     decompress_h5py(DATA_PATH, DECOMPRESSED_DATA_PATH)
@@ -290,13 +297,15 @@ def main():
     matplotlib.use('Agg')
     model = train_model(data_path=DATA_PATH,
                         save_path=SAVE_PATH,
-                        name = "test_",
+                        name = "run_",
                         lr=1e-4,
                         weight_decay=1e-5,
                         epochs=100,
                         window_size=15,
                         train_test_split=0.8,
-                        batch_size=64)
+                        batch_size=64,
+                        n_workers = 12,
+                        noise_std=0.05)
     
 if __name__ == "__main__":
     main()
