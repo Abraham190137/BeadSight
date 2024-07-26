@@ -301,7 +301,7 @@ def main():
     model = train_model(data_path=DATA_PATH,
                         save_path=SAVE_PATH,
                         name = "run_",
-                        lr=1e-3,
+                        lr=1e-4,
                         weight_decay=1e-5,
                         epochs=100,
                         window_size=15,
