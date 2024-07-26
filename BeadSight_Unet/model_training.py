@@ -175,7 +175,9 @@ def train_model(data_path: str,
                                   pixel_std=pixel_std,
                                   average_force=average_force,
                                   train=True,
-                                  window_size=window_size)
+                                  window_size=window_size,
+                                  image_noise_std=noise_std,
+                                  process_images=False)
     
     test_data = BeadSightDataset(hdf5_file=data_path,
                                  indicies=test_indices,
@@ -183,7 +185,8 @@ def train_model(data_path: str,
                                  pixel_std=pixel_std,
                                  average_force=average_force,
                                  train=False,
-                                 window_size=window_size)
+                                 window_size=window_size,
+                                 process_images=False)
     
     # create the data loaders
     train_data_loader = DataLoader(train_data, 
@@ -212,9 +215,7 @@ def train_model(data_path: str,
             images = images.to(device)
             pressure_maps = pressure_maps.to(device)
 
-            # add noise to the images - do this here so that cuda makes it faster
-            if noise_std > 0:
-                images = torch.normal(images, noise_std)
+            images = train_data.image_processing(images)
 
             outputs = model(images)
             loss = criterion(outputs, pressure_maps)
@@ -238,6 +239,8 @@ def train_model(data_path: str,
             for i, (images, pressure_maps, idx) in tqdm(enumerate(test_data_loader), desc=f'Epoch {epoch} - Testing', total=len(test_data_loader)):
                 images = images.to(device)
                 pressure_maps = pressure_maps.to(device)
+
+                images = test_data.image_processing(images)
 
                 outputs = model(images)
                 loss = criterion(outputs, pressure_maps)
@@ -298,7 +301,7 @@ def main():
     model = train_model(data_path=DATA_PATH,
                         save_path=SAVE_PATH,
                         name = "run_",
-                        lr=1e-4,
+                        lr=1e-3,
                         weight_decay=1e-5,
                         epochs=100,
                         window_size=15,

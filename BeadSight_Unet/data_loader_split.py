@@ -181,7 +181,6 @@ class PressureMapMaker:
     def pressure_from_force(self, force:float) -> float:
         return force*self.force_mult / (np.pi * self.contact_radius**2) * self.out_mult
         
-        
 
 class BeadSightDataset(Dataset):
     def __init__(self, 
@@ -193,8 +192,6 @@ class BeadSightDataset(Dataset):
                  train: bool,
                  rot_and_flip:bool=None,
                  window_size:int=15,
-                 image_noise_std:float=0.0,
-                 process_images:bool=True
                  ):
         
         print('begin dataset init')
@@ -202,8 +199,6 @@ class BeadSightDataset(Dataset):
         self.window_size = window_size
         self.indices = indicies
         self.train = train
-        self.image_noise_std = image_noise_std
-        self.process_images = process_images
         
         if rot_and_flip is None:
             self.rot_and_flip = train
@@ -220,7 +215,7 @@ class BeadSightDataset(Dataset):
 
 
         print('begin pressure map maker')
-        self.pressure_mapper = PressureMapMaker(image_size, 
+        self.pressure_map = PressureMapMaker(image_size, 
                                                 sensor_size, 
                                                 contact_radius, 
                                                 force_unit=force_unit, 
@@ -228,7 +223,7 @@ class BeadSightDataset(Dataset):
 
         self.image_normalize = transforms.Normalize(mean=pixel_mean, std=pixel_std)
 
-        self.avg_contact_pressure = self.pressure_mapper.pressure_from_force(average_force)
+        self.avg_contact_pressure = self.pressure_map.pressure_from_force(average_force)
 
         self.meta_data = {"average_force": average_force,
                           "pixel_mean": pixel_mean,
@@ -244,6 +239,7 @@ class BeadSightDataset(Dataset):
         return len(self.indices)
     
     def __getitem__(self, input_idx):
+        # start_time = time.time()
         with h5py.File(self.hdf5_file, 'r') as data:
             idx = self.indices[input_idx]
 
@@ -251,11 +247,14 @@ class BeadSightDataset(Dataset):
             images = data['images'][idx-self.window_size+1 : idx+1]
             force = data['forces'][idx]
             contact_pos = data['position'][idx]
+        # print(f"Time to load data: {time.time() - start_time}")
 
         # get the pressure map
-        pressure_mask = self.pressure_mapper.get_bool_map(contact_pos)
-        norm_pressure = self.pressure_mapper.pressure_from_force(force)/self.avg_contact_pressure
+        # start_time = time.time()
+        pressure_mask = self.pressure_map.get_bool_map(contact_pos)
+        # print(f"Time to create pressure map: {time.time() - start_time}")
 
+        # start_time = time.time()
         # do the flip and rotation in numpy so that we get views instead of copies
         if self.rot_and_flip: # apply random rotation and flip - default is to apply only during training
             rot = np.random.randint(0, 3) # random rotation
@@ -265,31 +264,42 @@ class BeadSightDataset(Dataset):
             if torch.rand(1) > 0.5: # random flip
                 images = np.flip(images, (2,))
                 pressure_mask = np.flip(pressure_mask, (0,))
-        
-        pressure_map = torch.from_numpy(pressure_mask.astype(np.float32))*norm_pressure
 
-        images = torch.from_numpy(images.copy()) # Need to copy to avoid negative strides
+        # print(f"Time to flip and rotate: {time.time() - start_time}")
+        
+        # start_time = time.time()
+        pressure_mask = torch.from_numpy(pressure_mask.copy()) # need to copy because of negative strides
+        assert pressure_mask.dtype == torch.bool
+
+        images = torch.from_numpy(images.copy()) # need to copy because of negative strides
+        assert images.dtype == torch.uint8
+        # print(f"Time to convert to torch: {time.time() - start_time}")
 
         # change the order of the dimensions: t, h, w, c -> t, c, h, w
         images = images.permute(0,3,1,2)
 
-        if self.process_images:
-            images = self.image_processing(images)
+        normalized_pressure = self.pressure_map.pressure_from_force(force) / self.avg_contact_pressure
+        normalized_pressure = torch.tensor(normalized_pressure, dtype=torch.float32)
 
-        return images, pressure_map, idx
-    
-    def image_processing(self, images:torch.Tensor) -> torch.Tensor:
+        pressure_mask = pressure_mask.float()*normalized_pressure
+
+        return images, pressure_mask, normalized_pressure, idx
+
+    def image_processing(self, 
+                         images:torch.Tensor, 
+                         pressure_masks:torch.Tensor, 
+                         pressure_values:torch.Tensor):
         """
-        Process the image tensor to be ready for the model. Can be run durring 
-        dataloading of after the images are sent to the GPU. 
-        Before the images are sent to the GPU decreases GPU compute
-        After the images are sent to the GPU decreases .to(device) time
+        Process a batch of images and pressure maps - reduces the size of the data sent to the GPU, and speeds up post-processing
+        images: torch.Tensor of shape (batch_size, t, h, w, c)
+        pressure_mask: torch.Tensor (bool) of shape (batch_size, h, w)
+        pressure_values: torch.Tensor of shape (batch_size)
         """
+        
         images = self.image_normalize(images.float())
-        if self.image_noise_std > 0:
-            images = torch.normal(images, self.image_noise_std)
+        # pressure_maps = pressure_masks.float()*pressure_values[:,None,None]
 
-        return images
+        return images, pressure_masks
     
 def replay_data(hdf5_file:str):
     import cv2
@@ -320,7 +330,7 @@ def replay_data(hdf5_file:str):
                                pixel_mean=pixel_mean,
                                pixel_std=pixel_std,
                                average_force=average_force,
-                               train=False,)
+                               train=False)
     
     for i in range(len(dataset)):
         images, pressure_map, idx = dataset.__getitem__(i)
