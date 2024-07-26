@@ -228,7 +228,8 @@ class BeadSightDataset(Dataset):
 
         self.image_normalize = transforms.Normalize(mean=pixel_mean, std=pixel_std)
 
-        self.avg_contact_pressure = self.pressure_mapper.pressure_from_force(average_force)
+        avg_map = self.pressure_mapper.get_bool_map((0,0)).astype(np.float32)*self.pressure_mapper.pressure_from_force(average_force)
+        self.avg_pressure = np.mean(avg_map)
 
         self.meta_data = {"average_force": average_force,
                           "pixel_mean": pixel_mean,
@@ -254,7 +255,7 @@ class BeadSightDataset(Dataset):
 
         # get the pressure map
         pressure_mask = self.pressure_mapper.get_bool_map(contact_pos)
-        norm_pressure = self.pressure_mapper.pressure_from_force(force)/self.avg_contact_pressure
+        norm_pressure = self.pressure_mapper.pressure_from_force(force)/self.avg_pressure
 
         # do the flip and rotation in numpy so that we get views instead of copies
         if self.rot_and_flip: # apply random rotation and flip - default is to apply only during training

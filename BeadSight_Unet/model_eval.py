@@ -47,7 +47,7 @@ def run_inference(checkpoint_path: str,
                                train=False,
                                window_size=window_size)
     
-    avg_contact_pressure = dataset.avg_contact_pressure
+    avg_pressure = dataset.avg_pressure
     
     
     test_data_loader = DataLoader(dataset, 
@@ -77,14 +77,14 @@ def run_inference(checkpoint_path: str,
         for i, data in enumerate(tqdm(test_data_loader)):
             video_frames, pressure_frames, idxs = data
 
-            un_norm_pressure_frames = (pressure_frames*avg_contact_pressure).cpu().numpy()
+            un_norm_pressure_frames = (pressure_frames*avg_pressure).cpu().numpy()
             
             video_frames = video_frames.to(device)
             pressure_frames = pressure_frames.to(device)
             
             with torch.no_grad():
                 # unnormlize the data
-                predictions = model(video_frames)*avg_contact_pressure
+                predictions = model(video_frames)*avg_pressure
                 predictions = predictions.cpu().numpy()
 
             ground_truth[i*batch_size:i*batch_size + len(idxs)] = un_norm_pressure_frames
