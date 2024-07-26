@@ -58,6 +58,15 @@ def run_inference(checkpoint_path: str,
                                   pin_memory=True)
     
     with h5py.File(save_path, 'w') as save_file:
+        save_file.attrs['checkpoint_path'] = checkpoint_path
+        
+        # copy the checkpoint info the the attributes, excluding the model and optimizer:
+        checkpoint_info = {}
+        for key, value in checkpoint.items():
+            if key not in ['model_state_dict', 'optimizer_state_dict']:
+                checkpoint_info[key] = value
+        save_file.attrs['checkpoint_info'] = checkpoint_info
+
         ground_truth = save_file.create_dataset(name='ground_truth', 
                                                 shape=(len(indicies), 256, 256),
                                                 chunks=(1, 256, 256), 
