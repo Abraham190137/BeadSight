@@ -8,6 +8,7 @@ import tqdm
 import time
 import torch
 from torchvision.transforms import functional as F
+import json
 
 from multiprocessing import Pool
 
@@ -204,11 +205,9 @@ class PrinterData:
 
 def convert_data_to_hdf5(data_folder_path:str, 
                          save_name:str, 
-                         printer_center:Tuple[float,float], # can be determined from the printer log
                          start_time:float=0,
                          end_time:float=-1,
                          resolution:Tuple[int,int]=(256,256),
-                         metadata:Dict[str,Any]={},
                          compression_level:int=0,
                          batch_size:int = 256):
     
@@ -221,6 +220,13 @@ def convert_data_to_hdf5(data_folder_path:str,
     VIDEO_LOG_PREFIX = "video_log_"
     VIDEO_LOG_SUFFIX = ".txt"
     CROP = (142, 892, 120, 870) # crop the image to remove the edges. Top, bottom, left, right
+
+    # load printer center from the experiment metadata (json file)
+    with open(os.path.join(data_folder_path, "experiment_parameters.json"), "r") as f:
+        metadata = json.load(f)
+
+    printer_center:Tuple[float,float] = metadata["center"] # can be determined from the printer log
+    resolution:Tuple[int,int] = metadata["resolution"] # can be determined from the video log
 
 
     # load the force data, using the ForceData class:
@@ -306,10 +312,8 @@ def convert_data_to_hdf5(data_folder_path:str,
         
         # add additional metadata:
         save_file.attrs.update(metadata)
-        save_file.attrs["printer_center"] = printer_center
         save_file.attrs["start_time"] = start_time
         save_file.attrs["end_time"] = end_time
-        save_file.attrs["resolution"] = resolution
         save_file.attrs["compression_level"] = compression_level
         
         # loop through the video files and load the data
@@ -413,21 +417,9 @@ def convert_data_to_hdf5(data_folder_path:str,
             
 if __name__ == "__main__":
 
-    meta_data = {
-        "resolution": (256, 256),
-        "fps": 30,
-        "contact_radius": 6.25,
-        "sensor_size": (41, 41),
-        "force_unit": "g",
-        "dist_unit": "mm",
-    }
-
-    convert_data_to_hdf5(data_folder_path = "data/12_hr_100_0", 
-                         save_name = "hours_11_to_12.hdf5",
-                         printer_center = (150.5, 109.5), 
-                         start_time=60*60*11, # seconds
-                         end_time=60*60*12, # seconds
-                         resolution = (256, 256), 
-                         metadata = meta_data, 
+    convert_data_to_hdf5(data_folder_path = "data/48_hr_100", 
+                         save_name = "hours_43_to_44.hdf5",
+                         start_time=60*60*43, # seconds
+                         end_time=60*60*44, # seconds
                          compression_level=0, 
                          batch_size=256)

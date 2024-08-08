@@ -99,4 +99,11 @@ def run_inference(checkpoint_path: str,
             ground_truth[i*batch_size:i*batch_size + len(idxs)] = un_norm_pressure_frames
             predictions[i*batch_size:i*batch_size + len(idxs)] = predictions
             data_indicies[i*batch_size:i*batch_size + len(idxs)] = idxs.cpu().numpy()
+
+if __name__ == '__main__':
+    checkpoint_path = 'path/to/checkpoint.pth'
+    data_path = 'path/to/data.hdf5'
+    save_path = 'path/to/save.hdf5'
+    
+    run_inference(checkpoint_path, data_path, save_path)
                     

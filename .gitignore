@@ -1,7 +1,7 @@
 Data Collection/data
 Data collection/output
 *.mp4
-x-unet/
+**x_unet.py
 processed_data/
 data/
 **/__pycache__/

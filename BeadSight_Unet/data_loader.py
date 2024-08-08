@@ -264,7 +264,7 @@ class BeadSightDataset(Dataset):
             pressure_mask = np.rot90(pressure_mask, rot, (0,1))
 
             if torch.rand(1) > 0.5: # random flip
-                images = np.flip(images, (2,))
+                images = np.flip(images, (1,))
                 pressure_mask = np.flip(pressure_mask, (0,))
         
         pressure_map = torch.from_numpy(pressure_mask.astype(np.float32))*norm_pressure
