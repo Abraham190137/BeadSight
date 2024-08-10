@@ -85,7 +85,7 @@ class UNet(nn.Module):
         # Separate convolutional layers for prediction
         self.pred = torch.nn.Conv2d(16, 1, 3, 1, 1)  
 
-    def forward(self, x):        
+    def forward(self, x) -> torch.Tensor:        
         # x: batch, 3, window_size, 256, 256
         # need to convert to batch, 3*window_size, 256, 256
         x = x.view(-1, 3*self.window_size, 256, 256)

@@ -244,7 +244,7 @@ class BeadSightDataset(Dataset):
     def __len__(self):
         return len(self.indices)
     
-    def __getitem__(self, input_idx):
+    def __getitem__(self, input_idx) -> tuple[torch.Tensor, torch.Tensor, int]:
         with h5py.File(self.hdf5_file, 'r') as data:
             idx = self.indices[input_idx]
 
