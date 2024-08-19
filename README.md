@@ -15,3 +15,5 @@ This folder contains the code for the Unet Model used in the Bead Sight paper
  - Data Processing (data_processing.py): Post-Processing of the data before use in the UNet model training 
  - Training and Testing (model_training.py): Training and Testing of the BeadSight UNet model, using the recorded data.
  - Inference (inference.py): Code for implementing the trained UNet model (loaded from saved weights) to process images collected during robot operation.
+
+Note to reviewers: I just re-submitted the paper (wanted to prioritize getting that out) and am currently working on cleaning the code base. I will push the updated code this week (by 8/23)
