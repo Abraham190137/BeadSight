@@ -44,8 +44,8 @@ def run_inference(checkpoint_path: str,
     # Load the dataset
     checkpoint = torch.load(checkpoint_path, map_location='cpu')
     window_size:int = checkpoint['window_size']
-    pixel_mean: float = checkpoint['pixel_mean']
-    pixel_std: float = checkpoint['pixel_std']
+    pixel_mean: List[float] = checkpoint['pixel_mean']
+    pixel_std: List[float] = checkpoint['pixel_std']
     average_force: float = checkpoint['data_loader_info']['average_force']
     
     model = UNet(window_size)
