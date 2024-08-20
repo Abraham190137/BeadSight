@@ -1,19 +1,15 @@
 # BeadSight
 This repo contains the code from the paper, "BeadSight: An Inexpensive Tactile Sensor Using Hydro-Gel Beads"
 
+ - Unet_model.py: Pytorch implementation of the UNet model
+ - raw_data_processing.py: Processes the video files, force data, and Gcode commands recorded by recording_main, converting the data into a hdf5 file.
+ - model_training.py: Training and Testing of the BeadSight UNet model, using the recorded data.
+ - inference.py: Code for implementing the trained UNet model (loaded from saved weights) to process images collected during robot operation.
+ - defisheye.py: Helper script to undo the fish-eye effect of the bead-sight camera's lens.
+ - data_loader.py: Dataset class, along with helper functions, for using the processed beadsight training data.
+
+
 ## Data Collection:
 This folder contains all of the code used for data collection and processing. It contains:
  - Arduino code (in the Arduino folder) which was used to collect force data. Scale Data Reader.py is used to control the Arduino over serial link and to save the recorded forces and timestamps.
- - Gcode generation (generate_g_code.py), which was used to create the GCode used for data collection.
- - Data Processing (raw_data_process.py), which used force data and the GCode data to generate pressure-map data (which is used in training) and to split the recorded video into individual presses.
- - Pressure Map Extraction (unpack_force_data.py), which converted the saved force data (.pkl file) to a pressure map. The pressure map is much more memory-intensive, which is why the pickle files are saved instead.
- - Example Usage (create_demo_force_video.py), in the form of a script to unpack the .pkl files to create and display a pressure map over time video.
-
-## BeadSight Unet: 
-This folder contains the code for the Unet Model used in the Bead Sight paper
- - U-Net model (Unet_model.py): Pytorch implementation of the UNet model
- - Data Processing (data_processing.py): Post-Processing of the data before use in the UNet model training 
- - Training and Testing (model_training.py): Training and Testing of the BeadSight UNet model, using the recorded data.
- - Inference (inference.py): Code for implementing the trained UNet model (loaded from saved weights) to process images collected during robot operation.
-
-Note to reviewers: I just re-submitted the paper (wanted to prioritize getting that out) and am currently working on cleaning the code base. I will push the updated code this week (by 8/21)
+ - recording_main.py, which records video from the bead sight camera (USB camera), records the current force applied, measured by the Arduino and sent over a serial connection, and controls the 3D printer to execute presses, via commands sent over a serial connection.
