@@ -114,7 +114,6 @@ DEWARPING_PARAMS = {
     "ycenter": None,
     "radius": None,
     "angle": 0,
-    # "dtype": "equalarea",
     "dtype": "linear",
     "format": "fullframe"
 }
@@ -204,7 +203,7 @@ class PrinterData:
   
 
 def convert_data_to_hdf5(data_folder_path:str, 
-                         save_name:str, 
+                         save_path:str, 
                          start_time:float=0,
                          end_time:float=-1,
                          resolution:Tuple[int,int]=(256,256),
@@ -269,7 +268,7 @@ def convert_data_to_hdf5(data_folder_path:str,
     cap.release()
     
     # open the hdf5 file:
-    with h5py.File(os.path.join(data_folder_path, save_name), "w") as save_file:
+    with h5py.File(save_path, "w") as save_file:
 
         # create datasets:
         if compression_level > 0:
@@ -417,9 +416,20 @@ def convert_data_to_hdf5(data_folder_path:str,
             
 if __name__ == "__main__":
 
-    convert_data_to_hdf5(data_folder_path = "data/48_hr_100", 
-                         save_name = "hours_43_to_44.hdf5",
-                         start_time=60*60*43, # seconds
-                         end_time=60*60*44, # seconds
+    convert_data_to_hdf5(data_folder_path = "/home/abraham/BeadSight/data/5_hr_100_2", 
+                         save_path = "/home/abraham/BeadSight/data/5_hr_100_2/hours_1_to_2.hdf5",
+                         start_time=60*60*1, # seconds
+                         end_time=60*60*2, # seconds
                          compression_level=0, 
                          batch_size=256)
+    
+    # # loop to create hour long folders 
+    # for i in range(3, 48, 1):
+    #     print("Converting data for hours", i, "to", i+1)
+    #     convert_data_to_hdf5(data_folder_path = "data/48_hr_100",
+    #                          save_path = f"/media/Storage/abraham/beadsight/48_hr_100/hours_{i}_to_{i+1}.hdf5",
+    #                          start_time=60*60*i, # seconds
+    #                          end_time=60*60*(i+1), # seconds
+    #                          compression_level=0, 
+    #                          batch_size=1024)
+

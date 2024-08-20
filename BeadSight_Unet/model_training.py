@@ -252,7 +252,7 @@ def train_model(data_path: str,
     os.makedirs(checkpoint_folder, exist_ok=False)
     
     # get device
-    device = torch.device("cuda:1" if torch.cuda.is_available() else "cpu")
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     # create the model
     model = UNet(window_size=window_size, dropout_prob=dropout_prob)
@@ -315,7 +315,7 @@ def train_model(data_path: str,
                                   pixel_mean=pixel_mean,
                                   pixel_std=pixel_std,
                                   average_force=average_force,
-                                  train=False,
+                                  train=True,
                                   window_size=window_size,
                                   image_noise_std=noise_std,
                                   process_images=False)
@@ -486,10 +486,10 @@ def train_model(data_path: str,
 def main():
     # use the root dir with the relative path to make an absolute path, so it works in any directory
     root_dir = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
-    DATA_PATH = os.path.join(root_dir, "data/48_hr_100/hours_1_to_3.hdf5")
-    VAL_DATA_PATH = os.path.join(root_dir, "data/48_hr_100/hours_43_to_44.hdf5")
+    DATA_PATH = os.path.join(root_dir, "data/12_hr_125/hours_1_to_3.hdf5")
+    VAL_DATA_PATH = os.path.join(root_dir, "data/12_hr_125/hours_11_to_12.hdf5")
     # DECOMPRESSED_DATA_PATH = os.path.join(root_dir, "data/initial_test_34/decompressed_data.hdf5")
-    SAVE_PATH = os.path.join(root_dir, "data/48_hr_100/trained_models")
+    SAVE_PATH = os.path.join(root_dir, "data/12_hr_125/trained_models")
 
     # if not os.path.exists(DECOMPRESSED_DATA_PATH):
     #     decompress_h5py(DATA_PATH, DECOMPRESSED_DATA_PATH)
@@ -498,7 +498,7 @@ def main():
     train_model(data_path=DATA_PATH,
                         save_path=SAVE_PATH,
                         validation_data_path= VAL_DATA_PATH,
-                        name = "hours_1_to_3_no_rotflip",
+                        name = "hours_1_to_3_same_as_paper",
                         lr=1e-4,
                         weight_decay=1e-4,
                         dropout_prob=0.2,

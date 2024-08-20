@@ -16,12 +16,12 @@ class Conv(nn.Module):
         super(Conv, self).__init__()
         self.layer = nn.Sequential(
 
-            nn.Conv2d(C_in, C_out, 5, 1, 2),
+            nn.Conv2d(C_in, C_out, 3, 1, 1),
             nn.InstanceNorm2d(C_out),
             nn.ELU(),
             nn.Dropout(dropout_prob),  # Add dropout
 
-            nn.Conv2d(C_out, C_out, 5, 1, 2),
+            nn.Conv2d(C_out, C_out, 3, 1, 1),
             nn.InstanceNorm2d(C_out),
             nn.ELU(),
             nn.Dropout(dropout_prob)  # Add dropout
