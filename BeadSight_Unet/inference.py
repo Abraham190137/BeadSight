@@ -4,52 +4,67 @@ import cv2
 from copy import deepcopy
 from Unet_model import UNet
 import numpy as np
-import PIL.Image as Image
 from tqdm import tqdm as tmdq
+from typing import List, Tuple, Dict
 
+# model params
+CHECKPOINT_PATH = 'best_model.pth'
+SAVE_PATH = "data/robot videos/force_15_apple_out.npy"
 
-video_file = "/data/robot videos/force_15_apple.mp4"
-model_path = 'best_model.pth'
-save_path = "data/robot videos/force_15_apple_out.npy"
-start_frame = 0
+# video settings
+WIDTH = 1280
+HEIGHT = 1024
+FPS = 30
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 model = UNet().to(device)
-checkpoint = torch.load(model_path)
+checkpoint = torch.load(CHECKPOINT_PATH, map_location='cpu')
+window_size:int = checkpoint['window_size']
+pixel_mean: List[float] = checkpoint['pixel_mean']
+pixel_std: List[float] = checkpoint['pixel_std']
+avg_pressure: float = checkpoint['avg_pressure']
 model.load_state_dict(checkpoint['model_state_dict'])
 model.eval()
 
 transform = transforms.Compose([
     transforms.Resize((256, 256)),  # Resize the images to 256x256
     transforms.ToTensor(),  # Convert the images to PyTorch tensors
+    transforms.Normalize(mean=pixel_mean, std=pixel_std) # Normalize the images
 ])
 
-cap = cv2.VideoCapture(video_file)
-num_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
-cap.set(cv2.CAP_PROP_POS_FRAMES, start_frame)
+# Open the beadsight camera. Alternatively, you can open a video file for testing.
+cap = cv2.VideoCapture(0)
 
-entire_video = torch.zeros((num_frames-start_frame, 3, 256, 256), dtype=torch.float32)
+cap.set(cv2.CAP_PROP_FRAME_WIDTH, WIDTH)
+cap.set(cv2.CAP_PROP_FRAME_HEIGHT, HEIGHT)
+cap.set(cv2.CAP_PROP_FPS, FPS)
+cap.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc(*'MJPG')) # helps increase the fps
 
-# load video frames
-for i in tmdq(range(num_frames-start_frame)):
+frame_buffer = []
+while True:
     ret, frame = cap.read()
     if not ret:
         break
+    
+    # add the frame to the buffer:
+    frame_buffer.append(frame)
+    if len(frame_buffer) < window_size:
+        continue # keep filling the buffer until it reaches the window size
+    
+    # once the buffer is full, we can start processing the frames
+    video_frames = torch.tensor(frame_buffer).permute(0, 3, 1, 2).clone().to(device) # t, h, w, c -> t, c, h, w
+    video_frames = transform(video_frames)
 
-    frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-    frame = transform(Image.fromarray(frame))
-    entire_video[i] = frame
-
-pressure_maps = np.zeros((num_frames-start_frame-15, 256, 256))
-
-for i in tmdq(range(num_frames-start_frame - 15)):
-    video_frames = torch.concat(entire_video[i:i+15], dim=0).clone().unsqueeze(0)
     with torch.no_grad():
-        predictions = model(video_frames.to(device))*1000
-        pressure_maps[i] = predictions.squeeze().cpu().numpy()
+        # predict the pressure maps, and multiply by the average pressure to get the actual pressure values
+        predictions = model(video_frames)*avg_pressure # Pa
+    
+    # show the pressure map:
+    pressure_map = predictions.squeeze().cpu().numpy()
+    cv2.imshow('Pressure Map', pressure_map)
+    cv2.waitKey(1)
 
-
-np.save(save_path, pressure_maps)
-cap.release()
+    # finally, remove the oldest frame from the buffer
+    frame_buffer.pop(0)
 
