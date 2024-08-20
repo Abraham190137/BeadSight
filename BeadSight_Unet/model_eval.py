@@ -101,53 +101,53 @@ def run_inference(checkpoint_path: str,
         #copy the checkpoint info the the attributes, excluding the model and optimizer:
 
         # save_file.attrs['checkpoint_info'] = checkpoint_info
-
+        n_samples = len(indicies)
         save_file.create_dataset(name='press_max_pressures',
                                  data=press_max_pressures)
 
         idx_data = save_file.create_dataset(name='indicies',
-                                                shape=(len(indicies),),
+                                                shape=(n_samples,),
                                                 dtype=np.int32)
 
 
         gt_pressure_map = save_file.create_dataset(name='gt_pressure_map', 
-                                                shape=(len(indicies), 256, 256),
+                                                shape=(n_samples, 256, 256),
                                                 chunks=(1, 256, 256), 
                                                 dtype=np.float32,
                                                 compression=9)
         
         gt_pressure_values = save_file.create_dataset(name='gt_pressure_values',
-                                                shape = (len(indicies),),
+                                                shape = (n_samples,),
                                                 dtype=np.float32)
         
         pred_pressure_map = save_file.create_dataset(name='pred_pressure_map', 
-                                               shape=(len(indicies), 256, 256),
+                                               shape=(n_samples, 256, 256),
                                                chunks=(1, 256, 256), 
                                                dtype=np.float32,
                                                compression=9)
         
         gt_center_of_pressure = save_file.create_dataset(name='gt_center_of_pressure',
-                                                         shape=(len(indicies), 2),
+                                                         shape=(n_samples, 2),
                                                          dtype=np.float32)
         
         pred_center_of_pressure = save_file.create_dataset(name='pred_center_of_pressure',
-                                                           shape=(len(indicies), 2),
+                                                           shape=(n_samples, 2),
                                                            dtype=np.float32)
         
         gt_total_force = save_file.create_dataset(name='gt_total_force',
-                                                    shape=(len(indicies),),
+                                                    shape=(n_samples,),
                                                     dtype=np.float32)
         
         pred_total_force = save_file.create_dataset(name='pred_total_force',
-                                                    shape=(len(indicies),),
+                                                    shape=(n_samples,),
                                                     dtype=np.float32)
         
         mse_values = save_file.create_dataset(name='mse_values',
-                                                shape=(len(indicies),),
+                                                shape=(n_samples,),
                                                 dtype=np.float32)
         
         mae_values = save_file.create_dataset(name='mae_values',
-                                                shape=(len(indicies),),
+                                                shape=(n_samples,),
                                                 dtype=np.float32)   
         
         

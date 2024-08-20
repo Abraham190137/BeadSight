@@ -4,7 +4,6 @@ import matplotlib as mpl
 import os
 from torch.utils.data import DataLoader
 from torchvision import transforms
-from BeadSight_Unet.model_training_old import MyDataset, plot_pressure_maps
 from tqdm.auto import tqdm
 import numpy as np
 from Unet_model import UNet
