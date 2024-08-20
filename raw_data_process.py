@@ -422,14 +422,4 @@ if __name__ == "__main__":
                          end_time=60*60*2, # seconds
                          compression_level=0, 
                          batch_size=256)
-    
-    # # loop to create hour long folders 
-    # for i in range(3, 48, 1):
-    #     print("Converting data for hours", i, "to", i+1)
-    #     convert_data_to_hdf5(data_folder_path = "data/48_hr_100",
-    #                          save_path = f"/media/Storage/abraham/beadsight/48_hr_100/hours_{i}_to_{i+1}.hdf5",
-    #                          start_time=60*60*i, # seconds
-    #                          end_time=60*60*(i+1), # seconds
-    #                          compression_level=0, 
-    #                          batch_size=1024)
 
