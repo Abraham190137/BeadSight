@@ -416,8 +416,8 @@ def convert_data_to_hdf5(data_folder_path:str,
             
 if __name__ == "__main__":
 
-    convert_data_to_hdf5(data_folder_path = "/home/abraham/BeadSight/data/5_hr_100_2", 
-                         save_path = "/home/abraham/BeadSight/data/5_hr_100_2/hours_1_to_2.hdf5",
+    convert_data_to_hdf5(data_folder_path = "data/5_hr_100_2", 
+                         save_path = "data/5_hr_100_2/hours_1_to_2.hdf5",
                          start_time=60*60*1, # seconds
                          end_time=60*60*2, # seconds
                          compression_level=0, 

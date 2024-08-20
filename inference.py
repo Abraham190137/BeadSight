@@ -6,8 +6,7 @@ from typing import List
 from defisheye import Defisheye
 
 # model params
-CHECKPOINT_PATH = 'best_model.pth'
-SAVE_PATH = "data/robot videos/force_15_apple_out.npy"
+CHECKPOINT_PATH = 'Trained_Models/75_bead_bag.pt'
 
 # video settings
 WIDTH = 1280
